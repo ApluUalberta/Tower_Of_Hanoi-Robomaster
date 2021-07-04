@@ -5,6 +5,7 @@
 #
 from robomaster import robot
 from robomaster import led
+import time
 
 # Relevant Measurements
 # Peg height = 14.6 account for .2 cm error
@@ -70,23 +71,23 @@ class pegMove :
         ep_chassis = ep_robot.chassis
 
         # Grab
-        grabHeight = Towerlist[self.peg - 1].counter * self.blockHeight + self.baseHeight                                  # newPeg -1 is the proper index for the give
+        grabHeight = TowerList[self.peg - 1].counter * self.blockHeight + self.baseHeight                                  # newPeg -1 is the proper index for the give
         
         # Move ep arm to the proper height for grab
-        if Towerlist[self.peg-1].counter ==1:
-            ep_arm.move_to(190,-70)
-        elif Towerlist[self.peg-1].counter == 2:
-            ep_arm.move_to(201,-40)
+        if TowerList[self.peg-1].counter ==1:
+            ep_arm.moveto(190,-70)
+        elif TowerList[self.peg-1].counter == 2:
+            ep_arm.moveto(201,-40)
         elif TowerList[self.peg-1].counter == 3:
-            ep_arm.move_to(200,-7)
+            ep_arm.moveto(200,-7)
 
         time.sleep(2)
         ep_gripper.close(50)
         time.sleep(2)
                    
-        Towerlist[self.peg - 1].sub()
+        TowerList[self.peg - 1].sub()
         # Clear the peg
-        ep_arm.move_to(204,67)
+        ep_arm.moveto(204,67)
 
         time.sleep(2)
         
@@ -95,20 +96,20 @@ class pegMove :
 
         # Place
         
-        placeheight = Towerlist[self.newPeg - 1].counter * self.blockHeight + self.baseHeight                                  # newPeg -1 is the proper index for the give
+        placeheight = TowerList[self.newPeg - 1].counter * self.blockHeight + self.baseHeight                                  # newPeg -1 is the proper index for the give
 
-        if Towerlist[self.newPeg-1].counter ==1:
-            ep_arm.move_to(190,-70)
-        elif Towerlist[self.newPeg-1].counter == 2:
-            ep_arm.move_to(201,-40)
+        if TowerList[self.newPeg-1].counter ==1:
+            ep_arm.moveto(190,-70)
+        elif TowerList[self.newPeg-1].counter == 2:
+            ep_arm.moveto(201,-40)
         elif TowerList[self.newPeg-1].counter == 3:
-            ep_arm.move_to(200,-7)
+            ep_arm.moveto(200,-7)
         
         time.sleep(2)
         ep_gripper.open(50)
         time.sleep(2)
         
-        Towerlist[self.newPeg - 1].add()
+        TowerList[self.newPeg - 1].add()
 
 
 class disc :
@@ -161,6 +162,14 @@ def test() :
 
         # 指定连接方式为AP 直连模式
         ep_robot.initialize(conn_type='ap')
+
+        ep_arm = ep_robot.robotic_arm
+        ep_gripper = ep_robot.gripper
+
+        ep_gripper.open(50)
+        time.sleep(2)
+        ep_arm.recenter()
+        time.sleep(2)
 
         TowerList = []
         Tower1 = Tower(3)
