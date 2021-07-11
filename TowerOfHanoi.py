@@ -51,7 +51,7 @@ class pegMove :
         self.name = name
         self.peg = peg
         # This value is hardcoded in m
-        self.distance = 0.32
+        self.distance = .32
         self.baseHeight = 0.007
         self.blockHeight = 0.038
 
@@ -64,7 +64,8 @@ class pegMove :
         # We do this by final - intitial. 
         pegFactor = self.newPeg - self.peg      #+ve means right, -ve means left
         distance = pegFactor * self.distance    # The distance to move in cm
-        
+        print("Peg Factor: ", pegFactor)
+        print("Moving Distance: ", distance)
         # Call Robomaster Functions
         ep_arm = ep_robot.robotic_arm
         ep_gripper = ep_robot.gripper
@@ -72,7 +73,7 @@ class pegMove :
 
         # Grab
         grabHeight = TowerList[self.peg - 1].counter * self.blockHeight + self.baseHeight                                  # newPeg -1 is the proper index for the give
-        
+        print("Grab Height: ", grabHeight)
         # Move ep arm to the proper height for grab
         if TowerList[self.peg-1].counter ==1:
             ep_arm.moveto(190,-70)
@@ -80,9 +81,8 @@ class pegMove :
             ep_arm.moveto(201,-40)
         elif TowerList[self.peg-1].counter == 3:
             ep_arm.moveto(200,-7)
-
         time.sleep(2)
-        ep_gripper.close(50)
+        ep_gripper.close(100)
         time.sleep(2)
                    
         TowerList[self.peg - 1].sub()
@@ -92,7 +92,7 @@ class pegMove :
         time.sleep(2)
         
         # move
-        ep_chassis.move(x=0, y=self.distance, z=0, xy_speed=0.30, z_speed=30).wait_for_completed()   # May need to tweak
+        ep_chassis.move(x=0, y=distance, z=0, xy_speed=0.30, z_speed=30).wait_for_completed()   # May need to tweak
 
         # Place
         
@@ -106,7 +106,7 @@ class pegMove :
             ep_arm.moveto(200,-7)
         
         time.sleep(2)
-        ep_gripper.open(50)
+        ep_gripper.open(100)
         time.sleep(2)
         
         TowerList[self.newPeg - 1].add()
@@ -136,6 +136,9 @@ class disc :
                              " to get out of my way and move to peg %s" % altPeg)
             self.nextSmaller.move(altPeg,TowerList,ep_robot)
             print(self.name + " : Moving to %s" % newPeg)
+            thisMove = pegMove(self.name, self.peg, newPeg)
+            thisMove.move(TowerList,ep_robot)
+
             self.peg = newPeg
             print(self.name + " : Asking " + self.nextSmaller.name +
                                 " to rejoin me on peg %s" % self.peg)
@@ -147,8 +150,6 @@ class disc :
             thisMove.move(TowerList,ep_robot)
 
             # Pegs are labelled 1,2,3
-            TowerList[self.peg - 1].sub()
-            TowerList[newPeg - 1].add()
 
             
             print("State: " + str(TowerList[0].counter),str(TowerList[1].counter),str(TowerList[2].counter))
@@ -163,10 +164,12 @@ def test() :
         # 指定连接方式为AP 直连模式
         ep_robot.initialize(conn_type='ap')
 
+        ep_ledrun = ep_robot.led
         ep_arm = ep_robot.robotic_arm
         ep_gripper = ep_robot.gripper
 
-        ep_gripper.open(50)
+        ep_ledrun.set_led(comp=led.COMP_ALL, r=255, g=0, b=0, effect=led.EFFECT_ON)
+        ep_gripper.open(100)
         time.sleep(2)
         ep_arm.recenter()
         time.sleep(2)
@@ -190,6 +193,16 @@ def test() :
     except Exception as e:
         print(e)
 
+    ep_led = ep_robot.led
+    ep_arm = ep_robot.robotic_arm
 
+    ep_led.set_led(comp=led.COMP_ALL, r=0, g=255, b=0, effect=led.EFFECT_ON)
+
+    ep_arm.recenter()
+    time.sleep(2)
+
+    time.sleep(3)
+    ep_led.set_led(comp=led.COMP_ALL, r=0, g=0, b=255, effect=led.EFFECT_ON)
+    ep_robot.close()
 
 if __name__ == "__main__" : test()
