@@ -35,6 +35,15 @@ import time
 
 # peg distance = 32 cm (in object)
 
+
+class RobotLocation:
+    def __init__(self,location):
+        # Variable will get hanged to 1,2,3
+        self.location = 0
+
+    def movingTo(self,location):
+        self.location = location
+
 class Tower:
     def __init__ (self, num_disks):
         self.counter = num_disks
@@ -47,23 +56,35 @@ class Tower:
 
 
 class pegMove :
-    def __init__ (self, name, peg, newPeg):
+    def __init__ (self, name, peg, newPeg,RobotLocation):
         self.name = name
         self.peg = peg
+        self.locationPeg = 0
         # This value is hardcoded in m
         self.distance = .32
         self.baseHeight = 0.007
-        self.blockHeight = 0.038
-
-        
+        self.blockHeight = 0.038        
         self.newPeg = newPeg
+        self.RobotLocation = RobotLocation
+        
     def move(self,TowerList,ep_robot):
         # We must decide to move units to the left or right first.
         # A -> C
         # Pegs are labelled 1,2,3
-        # We do this by final - intitial. 
+        # We do this by final - intitial.
+
+        print("newPeg:", self.newPeg)
+        print("Peg:", self.peg)
+        
         pegFactor = self.newPeg - self.peg      #+ve means right, -ve means left
         distance = pegFactor * self.distance    # The distance to move in cm
+
+        if pegFactor > 0:
+            # We will be located on the right
+            # Since we are located on the right, we need to know the origin location of the piece we are trying to grab (self.peg)
+            # We need to move to self.peg
+            # We are located pegFactor to the right
+            resetDistance = 
         print("Peg Factor: ", pegFactor)
         print("Moving Distance: ", distance)
         # Call Robomaster Functions
@@ -72,7 +93,10 @@ class pegMove :
         ep_chassis = ep_robot.chassis
 
         # Grab
-        grabHeight = TowerList[self.peg - 1].counter * self.blockHeight + self.baseHeight                                  # newPeg -1 is the proper index for the give
+        grabHeight = TowerList[self.peg - 1].counter * self.blockHeight + self.baseHeight                   # newPeg -1 is the proper index for the give
+        print("TowerList[self.peg - 1].counter: ", TowerList[self.peg - 1].counter)
+        print("Self.blockheight:" , self.blockHeight)
+        print("self.baseHeight:", self.baseHeight)
         print("Grab Height: ", grabHeight)
         # Move ep arm to the proper height for grab
         if TowerList[self.peg-1].counter ==1:
@@ -93,7 +117,8 @@ class pegMove :
         
         # move
         ep_chassis.move(x=0, y=distance, z=0, xy_speed=0.30, z_speed=30).wait_for_completed()   # May need to tweak
-
+        # After we move, we establish location (0,1,2)
+        self.RobotLocation = self.RobotLocation + pegFactor
         # Place
         
         placeheight = TowerList[self.newPeg - 1].counter * self.blockHeight + self.baseHeight                                  # newPeg -1 is the proper index for the give
@@ -118,14 +143,14 @@ class disc :
     # or the value None if this is to be the smallest disc
     def __init__ (self, name, peg, nextSmaller) :
         self.name = name
-        self.peg  = peg
+        self.peg  = peg 
         self.nextSmaller = nextSmaller
     # when asked to move to a new peg, find the alternate peg by starting
     # with a list of all 3 and removing the 2 I can't use.
     # then move everything above me to the alternate peg
     # then move myself (change my peg value).
     # Finally move the smaller pegs back on top of me
-    def move (self,newPeg,TowerList,ep_robot) :
+    def move (self,newPeg,TowerList,ep_robot,robotLocation) :
         print(self.name + " : I have been requested to move to peg %s" %  newPeg)
         if self.nextSmaller :
             pegs = [1,2,3]           # find what has to be the alternate peg
@@ -137,7 +162,7 @@ class disc :
             self.nextSmaller.move(altPeg,TowerList,ep_robot)
             print(self.name + " : Moving to %s" % newPeg)
             thisMove = pegMove(self.name, self.peg, newPeg)
-            thisMove.move(TowerList,ep_robot)
+            thisMove.move(TowerList,ep_robot,robotLocation)
 
             self.peg = newPeg
             print(self.name + " : Asking " + self.nextSmaller.name +
@@ -188,7 +213,9 @@ def test() :
         b = disc("B",1, c)      # 2nd largest disc
         a = disc("A",1, b)      # largest disc
 
-        a.move(3,TowerList,ep_robot)               # Now move all the discs to peg 3
+        robotLocation = RobotLocation(0)            # On the left
+
+        a.move(3,TowerList,robotLocation)               # Now move all the discs to peg 3
    
     except Exception as e:
         print(e)
