@@ -56,7 +56,7 @@ class Tower:
 
 
 class pegMove :
-    def __init__ (self, name, peg, newPeg,RobotLocation):
+    def __init__ (self, name, peg, newPeg):
         self.name = name
         self.peg = peg
         self.locationPeg = 0
@@ -65,13 +65,16 @@ class pegMove :
         self.baseHeight = 0.007
         self.blockHeight = 0.038        
         self.newPeg = newPeg
-        self.RobotLocation = RobotLocation
         
-    def move(self,TowerList,ep_robot):
+    def move(self,TowerList,ep_robot,robotLocation):
         # We must decide to move units to the left or right first.
         # A -> C
         # Pegs are labelled 1,2,3
         # We do this by final - intitial.
+        ep_arm = ep_robot.robotic_arm
+        ep_gripper = ep_robot.gripper
+        ep_chassis = ep_robot.chassis
+
 
         print("newPeg:", self.newPeg)
         print("Peg:", self.peg)
@@ -79,18 +82,22 @@ class pegMove :
         pegFactor = self.newPeg - self.peg      #+ve means right, -ve means left
         distance = pegFactor * self.distance    # The distance to move in cm
 
-        if pegFactor > 0:
-            # We will be located on the right
-            # Since we are located on the right, we need to know the origin location of the piece we are trying to grab (self.peg)
-            # We need to move to self.peg
-            # We are located pegFactor to the right
-            resetDistance = 
+        # We will be located on the right
+        # Since we are located on the right, we need to know the origin location of the piece we are trying to grab (self.peg)
+        # We need to move to self.peg
+        # We are located pegFactor to the right
+
+        resetDistance =  self.peg - robotLocation # +ve means right, -ve means left
+
+        ep_chassis.move(x=0, y=resetDistance, z=0, xy_speed=0.30, z_speed=30).wait_for_completed()   # Reset
+
+
+        
+        
         print("Peg Factor: ", pegFactor)
         print("Moving Distance: ", distance)
         # Call Robomaster Functions
-        ep_arm = ep_robot.robotic_arm
-        ep_gripper = ep_robot.gripper
-        ep_chassis = ep_robot.chassis
+
 
         # Grab
         grabHeight = TowerList[self.peg - 1].counter * self.blockHeight + self.baseHeight                   # newPeg -1 is the proper index for the give
@@ -118,7 +125,7 @@ class pegMove :
         # move
         ep_chassis.move(x=0, y=distance, z=0, xy_speed=0.30, z_speed=30).wait_for_completed()   # May need to tweak
         # After we move, we establish location (0,1,2)
-        self.RobotLocation = self.RobotLocation + pegFactor
+        robotLocation = robotLocation + pegFactor
         # Place
         
         placeheight = TowerList[self.newPeg - 1].counter * self.blockHeight + self.baseHeight                                  # newPeg -1 is the proper index for the give
@@ -150,7 +157,7 @@ class disc :
     # then move everything above me to the alternate peg
     # then move myself (change my peg value).
     # Finally move the smaller pegs back on top of me
-    def move (self,newPeg,TowerList,ep_robot,robotLocation) :
+    def move(self,newPeg,TowerList,ep_robot,robotLocation) :
         print(self.name + " : I have been requested to move to peg %s" %  newPeg)
         if self.nextSmaller :
             pegs = [1,2,3]           # find what has to be the alternate peg
@@ -172,7 +179,7 @@ class disc :
             # If I'm the smallest disc, life is very simple
             print(self.name +  " : Moving to %s" % newPeg)
             thisMove = pegMove(self.name, self.peg, newPeg)
-            thisMove.move(TowerList,ep_robot)
+            thisMove.move(TowerList,ep_robot,robotLocation)
 
             # Pegs are labelled 1,2,3
 
