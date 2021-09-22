@@ -1,12 +1,33 @@
 #
 #  t o w e r . p y
 #
-class RoboMaster :
-    def __init__ (self, peg) :
-        self.peg  = peg
-    def setPeg(myPeg):
-        self.peg = myPeg
 
+from robomaster import robot
+from robomaster import led
+import time
+
+
+class RoboMaster :
+    def __init__ (self,ep_robot,peg) :
+        self.ep_ledrun = ep_robot.led
+        self.ep_arm = ep_robot.robotic_arm
+        self.ep_gripper = ep_robot.gripper
+        self.ep_chassis = ep_robot.chassis
+
+        self.peg  = peg
+    def setPeg(self,myPeg):
+        self.peg = myPeg
+    
+    def moveHorizontally(self,displacement):
+        self.ep_chassis.move(x=0, y=displacement, z=0, xy_speed=0.30, z_speed=30).wait_for_completed()   # May need to tweak
+    
+    def moveArm(self,x,y):
+        self.ep_arm.moveto(x,y)
+    def gripperClose(self):
+        self.ep_gripper.close(100)
+    
+    def gripperOpen(self):
+        self.ep_gripper.open(100)
 
 
 class disc :
@@ -46,11 +67,14 @@ class disc :
         print("------------------------------------------------------------------------")
 
         resetFactor = self.peg - robomaster.peg
-        displacement = resetFactor * 0.64
+        displacement = resetFactor * 0.28
+
         
         print("self.peg: " + str(self.peg), "robomaster: " + str(robomaster.peg))
         print("ResetFactor: " + str(resetFactor), "Displacement: " + str(displacement))
-        # robot.move(x=displacement....)
+        robomaster.moveHorizontally(displacement)
+        
+
         # Now, we should be located at self.peg.
         print(" ")
         print(" ")
@@ -61,9 +85,11 @@ class disc :
         # So, we can move to newPeg
 
         moveFactor = newPeg - robomaster.peg
-        displacement = moveFactor * 0.64
+        displacement = moveFactor * 0.28
         print("newPeg: " + str(newPeg), "self.peg: " + str(self.peg), "robomaster: " + str(robomaster.peg))
         print("moveFactor: " + str(moveFactor), "Displacement: " + str(displacement))
+
+        robomaster.moveHorizontally(displacement)
         print(" ")
         print(" ")
 
@@ -115,12 +141,21 @@ class disc :
 # Make 3 discs all on peg 1. 'A' is the largest and on the bottom
 
 def test() :
+    ep_robot = robot.Robot()
 
-    Robot = RoboMaster(1)
+    try:
+        ep_robot.initialize(conn_type='ap')
+        Robot = RoboMaster(ep_robot,1)
+        c = disc("C",1, None)   # the smallest disc. No nextSmaller disc
+        b = disc("B",1, c)      # 2nd largest disc
+        a = disc("A",1, b)      # largest disc
+        a.move(3,Robot)               # Now move all the discs to peg 3
 
-    c = disc("C",1, None)   # the smallest disc. No nextSmaller disc
-    b = disc("B",1, c)      # 2nd largest disc
-    a = disc("A",1, b)      # largest disc
-    a.move(3,Robot)               # Now move all the discs to peg 3
+
+    except Exception as e:
+        print(e)
+    ep_robot.close()
+
+
 
 if __name__ == "__main__" : test()
